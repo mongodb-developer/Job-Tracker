@@ -19,8 +19,8 @@ class Job : RealmObject {
     var desc: String = ""
     var creationDate: Long? = null
     var area: Location? = null
+    var user: UserInfo? = null
 }
-
 
 class Location : RealmObject {
     @PrimaryKey
@@ -28,6 +28,9 @@ class Location : RealmObject {
     var name: String? = ""
 }
 
+enum class Status {
+    ACCEPTED, DONE, UNASSIGNED
+}
 
 
 

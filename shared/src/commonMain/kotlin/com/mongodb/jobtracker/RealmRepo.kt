@@ -1,5 +1,7 @@
 package com.mongodb.jobtracker
 
+import CommonFlow
+import asCommonFlow
 import io.realm.kotlin.Realm
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.log.LogLevel
@@ -11,6 +13,7 @@ import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.types.RealmInstant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -83,6 +86,9 @@ class RealmRepo {
     }
 
     suspend fun dataSetup() {
+        println("called")
+        val userId = appService.currentUser!!.id
+
 
         val locations = listOf(
             "New York",
@@ -106,19 +112,47 @@ class RealmRepo {
 
         withContext(Dispatchers.Default) {
 
-            val location = realm.query<Location>().first().find()!!
+
 
             realm.write {
+                val user = realm.query<UserInfo>("_id = $0", userId).first().find()!!
+                val location = realm.query<Location>().first().find()!!
+
                 val job = Job().apply {
                     desc = "Random Job"
                     area = findLatest(location)
                     creationDate = RealmInstant.now().epochSeconds
                     status = "Unassigned"
+                    this.user = findLatest(user)
                 }
                 copyToRealm(job)
             }
         }
     }
 
+    suspend fun getJob(type: Status): CommonFlow<List<Job>> {
+        val appUser = appService.currentUser ?: return emptyFlow<List<Job>>().asCommonFlow()
 
+        return withContext(Dispatchers.Default) {
+
+            val currentUser = realm.query<UserInfo>("_id = $0", appUser.id).first().find()!!
+
+            val result = when (type) {
+                Status.UNASSIGNED -> {
+                    realm.query<Job>("status = $0", Status.UNASSIGNED.name)
+                }
+
+                Status.DONE -> {
+                    realm.query<Job>("status = $0 && user = $1", Status.DONE.name, currentUser)
+                }
+
+                Status.ACCEPTED -> {
+                    realm.query<Job>("status = $0 && user = $1", Status.ACCEPTED.name, currentUser)
+                }
+            }
+            result.asFlow().map {
+                it.list
+            }.asCommonFlow()
+        }
+    }
 }
