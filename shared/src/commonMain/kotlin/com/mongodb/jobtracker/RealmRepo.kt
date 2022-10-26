@@ -10,6 +10,7 @@ import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -50,8 +51,6 @@ class RealmRepo {
     }
 
     fun getUserProfile(): Flow<UserInfo?> {
-
-
         val userId = appService.currentUser!!.id
         val user = realm.query<UserInfo>("_id = $0", userId).asFlow().map {
             it.list.firstOrNull()
@@ -112,8 +111,6 @@ class RealmRepo {
 
         withContext(Dispatchers.Default) {
 
-
-
             realm.write {
                 val user = realm.query<UserInfo>("_id = $0", userId).first().find()!!
                 val location = realm.query<Location>().first().find()!!
@@ -122,8 +119,8 @@ class RealmRepo {
                     desc = "Random Job"
                     area = findLatest(location)
                     creationDate = RealmInstant.now().epochSeconds
-                    status = "Unassigned"
-                    this.user = findLatest(user)
+                    status = Status.UNASSIGNED.name
+                    this.user = null
                 }
                 copyToRealm(job)
             }
@@ -135,7 +132,7 @@ class RealmRepo {
 
         return withContext(Dispatchers.Default) {
 
-            val currentUser = realm.query<UserInfo>("_id = $0", appUser.id).first().find()!!
+            val currentUser = realm.query<UserInfo>("_id = $0", appUser.id).find().first()
 
             val result = when (type) {
                 Status.UNASSIGNED -> {
@@ -143,11 +140,19 @@ class RealmRepo {
                 }
 
                 Status.DONE -> {
-                    realm.query<Job>("status = $0 && user = $1", Status.DONE.name, currentUser)
+                    realm.query<Job>(
+                        "status = $0 && user._id = $1",
+                        Status.DONE.name,
+                        currentUser._id
+                    )
                 }
 
                 Status.ACCEPTED -> {
-                    realm.query<Job>("status = $0 && user = $1", Status.ACCEPTED.name, currentUser)
+                    realm.query<Job>(
+                        "status = $0 && user._id = $1",
+                        Status.ACCEPTED.name,
+                        currentUser._id
+                    )
                 }
             }
             result.asFlow().map {
@@ -155,4 +160,25 @@ class RealmRepo {
             }.asCommonFlow()
         }
     }
+
+    suspend fun updateJobStatus(jobId: ObjectId) {
+
+        val appUser = appService.currentUser ?: return
+
+        withContext(Dispatchers.Default) {
+            realm.write {
+                val currentUser = query<UserInfo>("_id = $0", appUser.id).find().first()
+                val currentJob = query<Job>("_id = $0", jobId).find().first()
+                val updatedStatus = when (currentJob.status) {
+                    Status.UNASSIGNED.name -> Status.ACCEPTED.name
+                    else -> Status.DONE.name
+                }
+                copyToRealm(currentJob.apply {
+                    status = updatedStatus
+                    user = currentUser
+                })
+            }
+        }
+    }
+
 }
