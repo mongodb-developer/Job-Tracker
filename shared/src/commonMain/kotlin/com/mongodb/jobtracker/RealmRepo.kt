@@ -181,4 +181,11 @@ class RealmRepo {
         }
     }
 
+    suspend fun getLocation(): CommonFlow<List<Location>> {
+        return withContext(Dispatchers.Default) {
+            realm.query<Location>().asFlow().map {
+                it.list
+            }.asCommonFlow()
+        }
+    }
 }

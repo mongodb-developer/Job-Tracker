@@ -15,16 +15,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FabPosition
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -68,54 +69,43 @@ class HomeScreen : ComponentActivity() {
     fun TopBar() {
         val context = LocalContext.current
 
-        Scaffold(
-            topBar = {
-                CenterAlignedTopAppBar(
-                    title = {
-                        Text(
-                            text = stringResource(id = R.string.app_name),
-                            fontSize = 24.sp,
-                            modifier = Modifier.padding(horizontal = 8.dp)
+        Scaffold(topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        text = stringResource(id = R.string.app_name),
+                        fontSize = 24.sp,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                },
+                colors = TopAppBarDefaults.smallTopAppBarColors(
+                    containerColor = Color(0xFF3700B3),
+                    titleContentColor = Color.White
+                ),
+                actions = {
+                    IconButton(onClick = {
+                        startActivity(Intent(context, ProfileScreen::class.java))
+                    }) {
+                        Icon(
+                            imageVector = Icons.Rounded.AccountCircle,
+                            contentDescription = "Localized description",
+                            tint = Color.White
                         )
-                    },
-                    colors = TopAppBarDefaults.smallTopAppBarColors(
-                        containerColor = Color(0xFF3700B3),
-                        titleContentColor = Color.White
-                    ),
-                    actions = {
-                        IconButton(onClick = {
-                            startActivity(Intent(context, ProfileScreen::class.java))
-                        }) {
-                            Icon(
-                                imageVector = Icons.Rounded.AccountCircle,
-                                contentDescription = "Localized description",
-                                tint = Color.White
-                            )
-                        }
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { /* doSomething() */ }) {
-                            Icon(
-                                imageVector = Icons.Filled.Menu,
-                                contentDescription = "Localized description",
-                                tint = androidx.compose.ui.graphics.Color.White
-                            )
-                        }
-                    },
-                )
-            },
-            floatingActionButton = {
-                FloatingActionButton(onClick = {
-
-                }) {
-                    Icon(Icons.Filled.Add, "")
-                }
-            },
-            floatingActionButtonPosition = FabPosition.End
-        ) {
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = { /* doSomething() */ }) {
+                        Icon(
+                            imageVector = Icons.Filled.Menu,
+                            contentDescription = "Localized description",
+                            tint = androidx.compose.ui.graphics.Color.White
+                        )
+                    }
+                },
+            )
+        }) {
             Container(it.calculateTopPadding())
         }
-
     }
 
     @Preview
@@ -133,6 +123,7 @@ class HomeScreen : ComponentActivity() {
         val unassignedJobs = homeVM.unassignedJobs.observeAsState(emptyList())
         val doneJobs = homeVM.doneJobs.observeAsState(emptyList())
         val assignedJobs = homeVM.assignedJobs.observeAsState(emptyList())
+        val locationList = homeVM.getLocations.observeAsState(emptyList())
 
         val currentJobList = when (selectedTab.value) {
             0 -> unassignedJobs
@@ -144,8 +135,48 @@ class HomeScreen : ComponentActivity() {
             homeVM.updateJobStatus(jobId)
         }
 
+        val dropDownExpanded = remember { mutableStateOf(false) }
+        val selectionLocation = remember {
+            mutableStateOf("")
+        }
+
 
         Column(modifier = Modifier.padding(top = topPadding)) {
+
+            ExposedDropdownMenuBox(
+                expanded = dropDownExpanded.value,
+                onExpandedChange = { dropDownExpanded.value = !dropDownExpanded.value },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+
+                OutlinedTextField(
+                    value = selectionLocation.value,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text(text = "Selection Location") },
+                    colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropDownExpanded.value)
+                    },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                )
+
+                ExposedDropdownMenu(
+                    expanded = dropDownExpanded.value,
+                    onDismissRequest = { dropDownExpanded.value = false }) {
+                    locationList.value.forEach {
+                        DropdownMenuItem(text = {
+                            Text(text = it.name!!)
+                        }, onClick = {
+                            dropDownExpanded.value = false
+                            selectionLocation.value = it.name!!
+                        })
+                    }
+                }
+            }
 
             TabRow(
                 selectedTabIndex = selectedTab.value,
