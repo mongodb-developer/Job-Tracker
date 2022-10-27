@@ -6,17 +6,19 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
@@ -32,17 +34,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mongodb.jobtracker.Job
+import com.mongodb.jobtracker.Status
 import com.mongodb.jobtracker.android.R
 import com.mongodb.jobtracker.android.screen.profile.ProfileScreen
+import io.realm.kotlin.types.ObjectId
 
 class HomeScreen : ComponentActivity() {
 
@@ -126,10 +134,14 @@ class HomeScreen : ComponentActivity() {
         val doneJobs = homeVM.doneJobs.observeAsState(emptyList())
         val assignedJobs = homeVM.assignedJobs.observeAsState(emptyList())
 
-        val selectedJobs = when (selectedTab.value) {
-            0 -> assignedJobs
-            1 -> unassignedJobs
+        val currentJobList = when (selectedTab.value) {
+            0 -> unassignedJobs
+            1 -> assignedJobs
             else -> doneJobs
+        }
+
+        val onJobStatusChange = { jobId: ObjectId ->
+            homeVM.updateJobStatus(jobId)
         }
 
 
@@ -141,13 +153,12 @@ class HomeScreen : ComponentActivity() {
                     Tab(
                         selected = false,
                         onClick = { selectedTab.value = 0 },
-                        text = { Text(text = "Assigned") })
-
+                        text = { Text(text = "Unassigned") })
 
                     Tab(
                         selected = false,
                         onClick = { selectedTab.value = 1 },
-                        text = { Text(text = "Unassigned") })
+                        text = { Text(text = "Assigned") })
 
                     Tab(
                         selected = false,
@@ -156,31 +167,72 @@ class HomeScreen : ComponentActivity() {
                 }
             )
 
-            LazyColumn() {
-                items(count = selectedJobs.value.size) { itemPosition ->
-
+            LazyColumn {
+                items(count = currentJobList.value.size) { position ->
+                    ListRow(currentJobList.value[position], onJobStatusChange)
                 }
             }
         }
     }
 
-    @Preview(showBackground = true)
     @Composable
-    fun ListRow() {
+    fun ListRow(job: Job, onJobStatusChange: (id: ObjectId) -> Unit) {
+        val maxLines = remember { mutableStateOf(2) }
+        val elipseLabel = if (maxLines.value == Int.MAX_VALUE) "Less" else "More"
+        val actionLabel = when (job.status) {
+            Status.UNASSIGNED.name -> "Accept"
+            Status.ACCEPTED.name -> "Done"
+            else -> ""
+        }
+
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(8.dp)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("1")
-                Text(text = "22-10-2022")
+                Text("${job._id}")
+                Text(text = "${job.creationDate}")
             }
 
-            Text("This is job is about nothing, so enjoy", maxLines = 2)
 
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    job.desc,
+                    maxLines = maxLines.value,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(0.8f, true),
+                )
+
+                Text(text = elipseLabel,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clickable {
+                            maxLines.value =
+                                if (maxLines.value == Int.MAX_VALUE) 2 else Int.MAX_VALUE
+                        }
+                        .fillMaxHeight()
+                        .align(Alignment.Bottom))
+            }
+
+            if (maxLines.value == Int.MAX_VALUE && job.status != Status.DONE.name) {
+                Button(onClick = {
+                    onJobStatusChange(job._id)
+                }) {
+                    Text(text = actionLabel)
+                }
+            }
         }
     }
 }

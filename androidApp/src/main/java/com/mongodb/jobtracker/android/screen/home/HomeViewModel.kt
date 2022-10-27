@@ -4,11 +4,14 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.liveData
+import androidx.lifecycle.viewModelScope
 import com.mongodb.jobtracker.Job
 import com.mongodb.jobtracker.RealmRepo
 import com.mongodb.jobtracker.Status
+import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.launch
 
 class HomeViewModel : ViewModel() {
 
@@ -23,4 +26,9 @@ class HomeViewModel : ViewModel() {
         emitSource(repo.getJob(Status.ACCEPTED).flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main))
     }
 
+    fun updateJobStatus(jobId: ObjectId) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repo.updateJobStatus(jobId)
+        }
+    }
 }
