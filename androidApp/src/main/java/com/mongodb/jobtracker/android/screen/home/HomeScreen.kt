@@ -173,6 +173,7 @@ class HomeScreen : ComponentActivity() {
                         }, onClick = {
                             dropDownExpanded.value = false
                             selectionLocation.value = it.name!!
+                            homeVM.onLocationUpdate(it._id)
                         })
                     }
                 }

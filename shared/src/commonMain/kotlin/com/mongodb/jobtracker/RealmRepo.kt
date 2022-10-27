@@ -127,14 +127,14 @@ class RealmRepo {
         }
     }
 
-    suspend fun getJob(type: Status): CommonFlow<List<Job>> {
+    suspend fun getJob(type: Status, locationId: ObjectId? = null): CommonFlow<List<Job>> {
         val appUser = appService.currentUser ?: return emptyFlow<List<Job>>().asCommonFlow()
 
         return withContext(Dispatchers.Default) {
 
             val currentUser = realm.query<UserInfo>("_id = $0", appUser.id).find().first()
 
-            val result = when (type) {
+            var realmQuery = when (type) {
                 Status.UNASSIGNED -> {
                     realm.query<Job>("status = $0", Status.UNASSIGNED.name)
                 }
@@ -155,9 +155,12 @@ class RealmRepo {
                     )
                 }
             }
-            result.asFlow().map {
-                it.list
-            }.asCommonFlow()
+
+            if (locationId != null) {
+                realmQuery = realmQuery.query("area._id = $0", locationId)
+            }
+
+            realmQuery.asFlow().map { it.list }.asCommonFlow()
         }
     }
 

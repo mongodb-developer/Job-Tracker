@@ -11,31 +11,43 @@ import com.mongodb.jobtracker.RealmRepo
 import com.mongodb.jobtracker.Status
 import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 
+@ExperimentalCoroutinesApi
 class HomeViewModel : ViewModel() {
 
-    val repo = RealmRepo()
-    val unassignedJobs: LiveData<List<Job>> = liveData {
-        emitSource(
-            repo.getJob(Status.UNASSIGNED).flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main)
-        )
-    }
-    val doneJobs: LiveData<List<Job>> = liveData {
-        emitSource(repo.getJob(Status.DONE).flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main))
-    }
-    val assignedJobs: LiveData<List<Job>> = liveData {
-        emitSource(repo.getJob(Status.ACCEPTED).flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main))
-    }
+    private val _repo = RealmRepo()
+    private val _locationFlow = MutableStateFlow<ObjectId?>(null)
+
+    val unassignedJobs: LiveData<List<Job>> = _locationFlow.flatMapLatest {
+        _repo.getJob(Status.UNASSIGNED, it)
+    }.flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main)
+
+    val doneJobs: LiveData<List<Job>> = _locationFlow.flatMapLatest {
+        _repo.getJob(Status.DONE, it)
+    }.flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main)
+
+    val assignedJobs: LiveData<List<Job>> = _locationFlow.flatMapLatest {
+        _repo.getJob(Status.ACCEPTED)
+    }.flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main)
+
+
     val getLocations: LiveData<List<Location>> =
         liveData {
-            emitSource(repo.getLocation().flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main))
+            emitSource(_repo.getLocation().flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main))
         }
 
     fun updateJobStatus(jobId: ObjectId) {
         viewModelScope.launch(Dispatchers.IO) {
-            repo.updateJobStatus(jobId)
+            _repo.updateJobStatus(jobId)
         }
+    }
+
+    fun onLocationUpdate(_id: ObjectId) {
+        _locationFlow.value = _id
     }
 }
