@@ -131,8 +131,8 @@ class HomeScreen : ComponentActivity() {
             else -> doneJobs
         }
 
-        val onJobStatusChange = { jobId: ObjectId ->
-            homeVM.updateJobStatus(jobId)
+        val onJobStatusChange = { jobId: ObjectId, status: Status ->
+            homeVM.updateJobStatus(jobId, status)
         }
 
         val dropDownExpanded = remember { mutableStateOf(false) }
@@ -214,14 +214,9 @@ class HomeScreen : ComponentActivity() {
     }
 
     @Composable
-    fun ListRow(job: Job, onJobStatusChange: (id: ObjectId) -> Unit) {
+    fun ListRow(job: Job, onJobStatusChange: (id: ObjectId, status: Status) -> Unit) {
         val maxLines = remember { mutableStateOf(2) }
         val elipseLabel = if (maxLines.value == Int.MAX_VALUE) "Less" else "More"
-        val actionLabel = when (job.status) {
-            Status.UNASSIGNED.name -> "Accept"
-            Status.ACCEPTED.name -> "Done"
-            else -> ""
-        }
 
 
         Column(
@@ -264,11 +259,36 @@ class HomeScreen : ComponentActivity() {
                         .align(Alignment.Bottom))
             }
 
-            if (maxLines.value == Int.MAX_VALUE && job.status != Status.DONE.name) {
-                Button(onClick = {
-                    onJobStatusChange(job._id)
-                }) {
-                    Text(text = actionLabel)
+            if (maxLines.value == Int.MAX_VALUE) {
+                when (job.status) {
+                    Status.UNASSIGNED.name -> {
+                        Button(
+                            onClick = {
+                                onJobStatusChange(job._id, Status.ACCEPTED)
+                                maxLines.value = 2
+                            },
+                            content = {
+                                Text(text = "Assign")
+                            }
+                        )
+                    }
+
+                    Status.ACCEPTED.name -> {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            Button(onClick = { onJobStatusChange(job._id, Status.DONE) }) {
+                                Text(text = "Done")
+                            }
+
+                            Button(onClick = { onJobStatusChange(job._id, Status.UNASSIGNED) }) {
+                                Text(text = "Cancel")
+                            }
+                        }
+                    }
+
+                    else -> {}
                 }
             }
         }

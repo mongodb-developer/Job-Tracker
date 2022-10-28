@@ -45,9 +45,9 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    fun updateJobStatus(jobId: ObjectId) {
+    fun updateJobStatus(jobId: ObjectId, status: Status) {
         viewModelScope.launch(Dispatchers.IO) {
-            _repo.updateJobStatus(jobId)
+            _repo.updateJobStatus(jobId, status)
         }
     }
 
