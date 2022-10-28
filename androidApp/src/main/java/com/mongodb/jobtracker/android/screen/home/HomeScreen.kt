@@ -167,15 +167,21 @@ class HomeScreen : ComponentActivity() {
                 ExposedDropdownMenu(
                     expanded = dropDownExpanded.value,
                     onDismissRequest = { dropDownExpanded.value = false }) {
-                    locationList.value.forEach {
-                        DropdownMenuItem(text = {
-                            Text(text = it.name!!)
-                        }, onClick = {
-                            dropDownExpanded.value = false
-                            selectionLocation.value = it.name!!
-                            homeVM.onLocationUpdate(it._id)
-                        })
+                    locationList.value.forEachIndexed { index, location ->
+                        DropdownMenuItem(
+                            text = { Text(text = location.name!!) },
+                            onClick = {
+                                dropDownExpanded.value = false
+                                selectionLocation.value = location.name!!
+                                if (index == 0) {
+                                    homeVM.onLocationUpdate(null)
+                                } else {
+                                    homeVM.onLocationUpdate(location)
+                                }
+                            })
                     }
+
+
                 }
             }
 
@@ -229,7 +235,7 @@ class HomeScreen : ComponentActivity() {
                     .padding(bottom = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("${job._id}")
+                Text(text = (job._id.toString()).takeLast(5))
                 Text(text = "${job.creationDate}")
             }
 

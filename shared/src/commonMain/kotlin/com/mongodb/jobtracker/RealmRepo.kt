@@ -127,7 +127,7 @@ class RealmRepo {
         }
     }
 
-    suspend fun getJob(type: Status, locationId: ObjectId? = null): CommonFlow<List<Job>> {
+    suspend fun getJob(type: Status, location: Location? = null): CommonFlow<List<Job>> {
         val appUser = appService.currentUser ?: return emptyFlow<List<Job>>().asCommonFlow()
 
         return withContext(Dispatchers.Default) {
@@ -156,8 +156,8 @@ class RealmRepo {
                 }
             }
 
-            if (locationId != null) {
-                realmQuery = realmQuery.query("area._id = $0", locationId)
+            if (location != null) {
+                realmQuery = realmQuery.query("area._id = $0", location._id)
             }
 
             realmQuery.asFlow().map { it.list }.asCommonFlow()

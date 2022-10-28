@@ -1,6 +1,7 @@
 package com.mongodb.jobtracker.android.screen.home
 
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.liveData
@@ -21,25 +22,28 @@ import kotlinx.coroutines.launch
 class HomeViewModel : ViewModel() {
 
     private val _repo = RealmRepo()
-    private val _locationFlow = MutableStateFlow<ObjectId?>(null)
+    private val _selectionLocation = MutableStateFlow<Location?>(null)
 
-    val unassignedJobs: LiveData<List<Job>> = _locationFlow.flatMapLatest {
+    val unassignedJobs: LiveData<List<Job>> = _selectionLocation.flatMapLatest {
         _repo.getJob(Status.UNASSIGNED, it)
     }.flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main)
 
-    val doneJobs: LiveData<List<Job>> = _locationFlow.flatMapLatest {
+    val doneJobs: LiveData<List<Job>> = _selectionLocation.flatMapLatest {
         _repo.getJob(Status.DONE, it)
     }.flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main)
 
-    val assignedJobs: LiveData<List<Job>> = _locationFlow.flatMapLatest {
+    val assignedJobs: LiveData<List<Job>> = _selectionLocation.flatMapLatest {
         _repo.getJob(Status.ACCEPTED)
     }.flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main)
 
 
-    val getLocations: LiveData<List<Location>> =
-        liveData {
-            emitSource(_repo.getLocation().flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main))
+    val getLocations: LiveData<List<Location>> = Transformations.map(liveData {
+        emitSource(_repo.getLocation().flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main))
+    }) {
+        it.toMutableList().apply {
+            add(0, Location().apply { name = "All Location" })
         }
+    }
 
     fun updateJobStatus(jobId: ObjectId) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -47,7 +51,7 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    fun onLocationUpdate(_id: ObjectId) {
-        _locationFlow.value = _id
+    fun onLocationUpdate(location: Location? = null) {
+        _selectionLocation.value = location
     }
 }
