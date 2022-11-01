@@ -7,30 +7,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.rounded.AccountCircle
-import androidx.compose.material3.Button
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -51,6 +33,7 @@ import com.mongodb.jobtracker.Job
 import com.mongodb.jobtracker.Status
 import com.mongodb.jobtracker.android.R
 import com.mongodb.jobtracker.android.screen.profile.ProfileScreen
+import com.mongodb.jobtracker.displayDate
 import io.realm.kotlin.types.ObjectId
 
 class HomeScreen : ComponentActivity() {
@@ -169,10 +152,10 @@ class HomeScreen : ComponentActivity() {
                     onDismissRequest = { dropDownExpanded.value = false }) {
                     locationList.value.forEachIndexed { index, location ->
                         DropdownMenuItem(
-                            text = { Text(text = location.name!!) },
+                            text = { Text(text = location.name) },
                             onClick = {
                                 dropDownExpanded.value = false
-                                selectionLocation.value = location.name!!
+                                selectionLocation.value = location.name
                                 if (index == 0) {
                                     homeVM.onLocationUpdate(null)
                                 } else {
@@ -231,7 +214,7 @@ class HomeScreen : ComponentActivity() {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = (job._id.toString()).takeLast(5))
-                Text(text = "${job.creationDate}")
+                Text(text = job.displayDate())
             }
 
 
