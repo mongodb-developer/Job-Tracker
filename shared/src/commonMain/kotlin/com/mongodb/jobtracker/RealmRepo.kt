@@ -25,7 +25,7 @@ class RealmRepo {
 
     private val appService by lazy {
         val appConfiguration =
-            AppConfiguration.Builder(appId = "application-0-odskt").log(LogLevel.ALL).build()
+            AppConfiguration.Builder(appId = "jobtrackerrealmapp-mlapp").log(LogLevel.ALL).build()
         App.create(appConfiguration)
     }
 
