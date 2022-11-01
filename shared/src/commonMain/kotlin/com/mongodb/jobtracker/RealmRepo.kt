@@ -25,7 +25,7 @@ class RealmRepo {
 
     private val appService by lazy {
         val appConfiguration =
-            AppConfiguration.Builder(appId = "jobtrackerrealmapp-mlapp").log(LogLevel.ALL).build()
+            AppConfiguration.Builder(appId = "application-0-odskt").log(LogLevel.ALL).build()
         App.create(appConfiguration)
     }
 
@@ -71,7 +71,7 @@ class RealmRepo {
                     if (user != null) {
                         user = findLatest(user)!!.also {
                             it.name = name
-                            it.phoneNumber = phoneNumber.toLongOrNull()
+                            it.phoneNumber = phoneNumber
                         }
                         copyToRealm(user)
                     }
@@ -112,13 +112,12 @@ class RealmRepo {
         withContext(Dispatchers.Default) {
 
             realm.write {
-                val user = realm.query<UserInfo>("_id = $0", userId).first().find()!!
                 val location = realm.query<Location>().first().find()!!
 
                 val job = Job().apply {
                     desc = "Random Job"
-                    area = findLatest(location)
-                    creationDate = RealmInstant.now().epochSeconds
+                    area = findLatest(location)!!.name
+                    creationDate = RealmInstant.now()
                     status = Status.UNASSIGNED.name
                     this.user = null
                 }
@@ -130,8 +129,8 @@ class RealmRepo {
     suspend fun getJob(type: Status, location: Location? = null): CommonFlow<List<Job>> {
         val appUser = appService.currentUser ?: return emptyFlow<List<Job>>().asCommonFlow()
 
+        println("context -- ${appUser.id}")
         return withContext(Dispatchers.Default) {
-
             val currentUser = realm.query<UserInfo>("_id = $0", appUser.id).find().first()
 
             var realmQuery = when (type) {
@@ -141,23 +140,23 @@ class RealmRepo {
 
                 Status.DONE -> {
                     realm.query<Job>(
-                        "status = $0 && user._id = $1",
+                        "status = $0 && user = $1",
                         Status.DONE.name,
-                        currentUser._id
+                        currentUser.email
                     )
                 }
 
                 Status.ACCEPTED -> {
                     realm.query<Job>(
-                        "status = $0 && user._id = $1",
+                        "status = $0 && user = $1",
                         Status.ACCEPTED.name,
-                        currentUser._id
+                        currentUser.email
                     )
                 }
             }
 
             if (location != null) {
-                realmQuery = realmQuery.query("area._id = $0", location._id)
+                realmQuery = realmQuery.query("area = $0", location.name)
             }
 
             realmQuery.asFlow().map { it.list }.asCommonFlow()
@@ -174,7 +173,7 @@ class RealmRepo {
                 val currentJob = query<Job>("_id = $0", jobId).find().first()
                 copyToRealm(currentJob.apply {
                     this.status = currentJobStatus.name
-                    user = currentUser
+                    user = currentUser.email
                 })
             }
         }

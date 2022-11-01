@@ -1,7 +1,9 @@
 package com.mongodb.jobtracker
 
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 
 class UserInfo : RealmObject {
@@ -9,7 +11,7 @@ class UserInfo : RealmObject {
     var _id: String = ""
     var name: String = ""
     var email: String = ""
-    var phoneNumber: Long? = null
+    var phoneNumber: String = ""
 }
 
 class Job : RealmObject {
@@ -17,15 +19,15 @@ class Job : RealmObject {
     var _id: ObjectId = ObjectId.create()
     var status: String? = ""
     var desc: String = ""
-    var creationDate: Long? = null
-    var area: Location? = null
-    var user: UserInfo? = null
+    var creationDate: RealmInstant? = null
+    var area: String = ""
+    var user: String? = ""
 }
 
 class Location : RealmObject {
     @PrimaryKey
-    var _id: ObjectId = ObjectId.create()
-    var name: String? = ""
+    var _id: RealmUUID = RealmUUID.random()
+    var name: String = ""
 }
 
 enum class Status {
