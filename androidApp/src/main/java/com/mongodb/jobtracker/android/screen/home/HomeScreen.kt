@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,7 +36,9 @@ import com.mongodb.jobtracker.android.R
 import com.mongodb.jobtracker.android.screen.profile.ProfileScreen
 import com.mongodb.jobtracker.displayDate
 import io.realm.kotlin.types.ObjectId
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
+@ExperimentalCoroutinesApi
 class HomeScreen : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -122,7 +125,7 @@ class HomeScreen : ComponentActivity() {
         val selectionLocation = remember {
             mutableStateOf("")
         }
-
+        val localSearchText = homeVM.searchKeyword.collectAsState("")
 
         Column(modifier = Modifier.padding(top = topPadding)) {
 
@@ -189,6 +192,22 @@ class HomeScreen : ComponentActivity() {
             )
 
             LazyColumn {
+
+              /*  item {
+                    OutlinedTextField(
+                        value = localSearchText.value,
+                        onValueChange = {
+                            homeVM.onSearchUpdate(it)
+                        },
+                        placeholder = {
+                            Text(text = "Enter your search keyword")
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                    )
+                }*/
+
                 items(count = currentJobList.value.size) { position ->
                     ListRow(currentJobList.value[position], onJobStatusChange)
                 }

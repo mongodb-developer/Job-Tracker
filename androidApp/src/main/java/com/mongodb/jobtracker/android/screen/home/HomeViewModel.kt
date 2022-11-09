@@ -23,6 +23,7 @@ class HomeViewModel : ViewModel() {
 
     private val _repo = RealmRepo()
     private val _selectionLocation = MutableStateFlow<Location?>(null)
+    val searchKeyword = MutableStateFlow("")
 
     val unassignedJobs: LiveData<List<Job>> = _selectionLocation.flatMapLatest {
         _repo.getJob(Status.UNASSIGNED, it)
@@ -53,5 +54,9 @@ class HomeViewModel : ViewModel() {
 
     fun onLocationUpdate(location: Location? = null) {
         _selectionLocation.value = location
+    }
+
+    fun onSearchUpdate(keyword: String = "") {
+        searchKeyword.value = keyword
     }
 }

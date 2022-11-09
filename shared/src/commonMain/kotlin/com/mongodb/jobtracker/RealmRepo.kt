@@ -129,7 +129,6 @@ class RealmRepo {
     suspend fun getJob(type: Status, location: Location? = null): CommonFlow<List<Job>> {
         val appUser = appService.currentUser ?: return emptyFlow<List<Job>>().asCommonFlow()
 
-        println("context -- ${appUser.id}")
         return withContext(Dispatchers.Default) {
             val currentUser = realm.query<UserInfo>("_id = $0", appUser.id).find().first()
 
