@@ -14,28 +14,45 @@ import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 @ExperimentalCoroutinesApi
 class HomeViewModel : ViewModel() {
 
     private val _repo = RealmRepo()
-    private val _selectionLocation = MutableStateFlow<Location?>(null)
-    val searchKeyword = MutableStateFlow("")
+    private val _selectionLocation: MutableStateFlow<Location?> = MutableStateFlow(null)
+    val searchKeyword: MutableStateFlow<String> = MutableStateFlow("")
 
-    val unassignedJobs: LiveData<List<Job>> = _selectionLocation.flatMapLatest {
-        _repo.getJob(Status.UNASSIGNED, it)
-    }.flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main)
+    val unassignedJobs: LiveData<List<Job>> =
+        combine(_selectionLocation, searchKeyword) { location: Location?, keyword: String ->
+            location to keyword
+        }.flatMapLatest { pair ->
+            _repo.getJob(Status.UNASSIGNED, pair.first).map {
+                it.filter { it.desc.contains(pair.second) }
+            }
+        }.flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main)
 
-    val doneJobs: LiveData<List<Job>> = _selectionLocation.flatMapLatest {
-        _repo.getJob(Status.DONE, it)
-    }.flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main)
+    val doneJobs: LiveData<List<Job>> =
+        combine(_selectionLocation, searchKeyword) { location: Location?, keyword: String ->
+            location to keyword
+        }.flatMapLatest { pair ->
+            _repo.getJob(Status.DONE, pair.first).map {
+                it.filter { it.desc.contains(pair.second) }
+            }
+        }.flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main)
 
-    val assignedJobs: LiveData<List<Job>> = _selectionLocation.flatMapLatest {
-        _repo.getJob(Status.ACCEPTED)
-    }.flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main)
+    val assignedJobs: LiveData<List<Job>> =
+        combine(_selectionLocation, searchKeyword) { location: Location?, keyword: String ->
+            location to keyword
+        }.flatMapLatest { pair ->
+            _repo.getJob(Status.ACCEPTED, pair.first).map {
+                it.filter { it.desc.contains(pair.second) }
+            }
+        }.flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main)
 
 
     val getLocations: LiveData<List<Location>> = Transformations.map(liveData {

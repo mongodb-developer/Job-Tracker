@@ -84,7 +84,7 @@ class HomeScreen : ComponentActivity() {
                         Icon(
                             imageVector = Icons.Filled.Menu,
                             contentDescription = "Localized description",
-                            tint = androidx.compose.ui.graphics.Color.White
+                            tint = Color.White
                         )
                     }
                 },
@@ -193,7 +193,7 @@ class HomeScreen : ComponentActivity() {
 
             LazyColumn {
 
-              /*  item {
+                item {
                     OutlinedTextField(
                         value = localSearchText.value,
                         onValueChange = {
@@ -206,7 +206,7 @@ class HomeScreen : ComponentActivity() {
                             .fillMaxWidth()
                             .padding(8.dp)
                     )
-                }*/
+                }
 
                 items(count = currentJobList.value.size) { position ->
                     ListRow(currentJobList.value[position], onJobStatusChange)
