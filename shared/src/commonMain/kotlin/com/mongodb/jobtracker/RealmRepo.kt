@@ -162,7 +162,7 @@ class RealmRepo {
         }
     }
 
-    suspend fun updateJobStatus(jobId: ObjectId, currentJobStatus: Status) {
+    suspend fun updateJobStatus(jobId: ObjectId, newJobStatus: Status) {
 
         val appUser = appService.currentUser ?: return
 
@@ -171,8 +171,8 @@ class RealmRepo {
                 val currentUser = query<UserInfo>("_id = $0", appUser.id).find().first()
                 val currentJob = query<Job>("_id = $0", jobId).find().first()
                 copyToRealm(currentJob.apply {
-                    this.status = currentJobStatus.name
-                    user = currentUser.email
+                    this.status = newJobStatus.name
+                    user = if (newJobStatus == Status.UNASSIGNED) null else currentUser.email
                 })
             }
         }
