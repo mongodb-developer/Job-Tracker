@@ -10,10 +10,13 @@ import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.notifications.InitialResults
+import io.realm.kotlin.notifications.UpdatedResults
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -41,6 +44,9 @@ class RealmRepo {
                 }.waitForInitialRemoteData().build()
         Realm.open(config)
     }
+
+    val newJobAvailable: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
 
     suspend fun login(email: String, password: String): User {
         return appService.login(Credentials.emailPassword(email, password))
@@ -158,7 +164,23 @@ class RealmRepo {
                 realmQuery = realmQuery.query("area = $0", location.name)
             }
 
-            realmQuery.asFlow().map { it.list }.asCommonFlow()
+            realmQuery.asFlow().map {
+
+                when (it) {
+                    is InitialResults -> it.list
+
+                    is UpdatedResults -> {
+                        checkForNewJobs(type, it)
+                        it.list
+                    }
+                }
+            }.asCommonFlow()
+        }
+    }
+
+    private suspend fun checkForNewJobs(type: Status, list: UpdatedResults<Job>) {
+        if (type == Status.UNASSIGNED && list.insertions.isNotEmpty()) {
+            newJobAvailable.emit(true)
         }
     }
 

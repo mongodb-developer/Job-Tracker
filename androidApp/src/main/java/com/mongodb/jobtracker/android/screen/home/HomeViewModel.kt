@@ -14,6 +14,7 @@ import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
@@ -54,6 +55,7 @@ class HomeViewModel : ViewModel() {
             }
         }.flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main)
 
+    val newJobAlert: LiveData<Boolean> = _repo.newJobAvailable.buffer().asLiveData(Dispatchers.Main)
 
     val getLocations: LiveData<List<Location>> = Transformations.map(liveData {
         emitSource(_repo.getLocation().flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main))

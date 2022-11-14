@@ -4,6 +4,7 @@ package com.mongodb.jobtracker.android.screen.home
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
@@ -48,7 +49,6 @@ class HomeScreen : ComponentActivity() {
             TopBar()
         }
     }
-
 
     @Preview
     @Composable
@@ -126,6 +126,8 @@ class HomeScreen : ComponentActivity() {
             mutableStateOf("")
         }
         val localSearchText = homeVM.searchKeyword.collectAsState("")
+
+        val onNewJob = homeVM.newJobAlert.observeAsState(false)
 
         Column(modifier = Modifier.padding(top = topPadding)) {
 
@@ -212,6 +214,10 @@ class HomeScreen : ComponentActivity() {
                     ListRow(currentJobList.value[position], onJobStatusChange)
                 }
             }
+
+            if (onNewJob.value)
+                Toast.makeText(LocalContext.current, "New Job is available", Toast.LENGTH_LONG)
+                    .show()
         }
     }
 
