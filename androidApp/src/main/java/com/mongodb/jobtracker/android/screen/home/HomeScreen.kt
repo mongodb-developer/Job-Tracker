@@ -4,6 +4,7 @@ package com.mongodb.jobtracker.android.screen.home
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.format.DateUtils
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -241,7 +242,7 @@ class HomeScreen : ComponentActivity() {
                 Text(text = (job._id.toString()).takeLast(5))
 
                 val displayDate = DateUtils.getRelativeTimeSpanString(
-                    job.displayDate().toLong(),
+                    job.displayDate(),
                     System.currentTimeMillis(),
                     DateUtils.MINUTE_IN_MILLIS,
                     DateUtils.FORMAT_ABBREV_RELATIVE

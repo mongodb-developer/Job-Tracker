@@ -6,8 +6,6 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 
 class UserInfo : RealmObject {
     @PrimaryKey
@@ -27,9 +25,9 @@ class Job : RealmObject {
     var user: String? = ""
 }
 
-fun Job.displayDate(): String {
+fun Job.displayDate(): Long {
     val instant = Instant.fromEpochSeconds(creationDate!!.epochSeconds, creationDate!!.nanosecondsOfSecond)
-    return instant.toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
+    return instant.toEpochMilliseconds()
 }
 
 class Location : RealmObject {
