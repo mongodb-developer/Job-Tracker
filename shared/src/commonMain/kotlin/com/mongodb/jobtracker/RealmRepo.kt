@@ -12,6 +12,7 @@ import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.notifications.InitialResults
 import io.realm.kotlin.notifications.UpdatedResults
+import io.realm.kotlin.query.Sort
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import kotlinx.coroutines.Dispatchers
@@ -164,7 +165,7 @@ class RealmRepo {
                 realmQuery = realmQuery.query("area = $0", location.name)
             }
 
-            realmQuery.asFlow().map {
+            realmQuery.sort("creationDate",Sort.DESCENDING).asFlow().map {
 
                 when (it) {
                     is InitialResults -> it.list
