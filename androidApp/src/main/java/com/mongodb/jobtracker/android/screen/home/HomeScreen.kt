@@ -239,7 +239,14 @@ class HomeScreen : ComponentActivity() {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(text = (job._id.toString()).takeLast(5))
-                Text(text = job.displayDate())
+
+                val displayDate = DateUtils.getRelativeTimeSpanString(
+                    job.displayDate().toLong(),
+                    System.currentTimeMillis(),
+                    DateUtils.MINUTE_IN_MILLIS,
+                    DateUtils.FORMAT_ABBREV_RELATIVE
+                )
+                Text(text = displayDate.toString())
             }
 
 
