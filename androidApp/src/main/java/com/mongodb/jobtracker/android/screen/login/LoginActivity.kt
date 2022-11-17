@@ -5,6 +5,7 @@ package com.mongodb.jobtracker.android.screen.login
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -81,10 +82,16 @@ class LoginActivity : ComponentActivity() {
 
             val loginViewModel = viewModel<LoginViewModel>()
 
-            loginViewModel.loginStatus.observeAsState(false).apply {
-                if (this.value) {
-                    showProgress = false
+            loginViewModel.loginStatus.observeAsState().apply {
+                showProgress = false
+                if (this.value == true) {
                     NavigateToHome()
+                } else if(this.value == false) {
+                    Toast.makeText(
+                        LocalContext.current,
+                        "Invalid username or password",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
 
