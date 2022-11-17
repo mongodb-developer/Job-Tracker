@@ -33,7 +33,7 @@ class HomeViewModel : ViewModel() {
             location to keyword
         }.flatMapLatest { pair ->
             _repo.getJob(Status.UNASSIGNED, pair.first).map {
-                it.filter { it.desc.contains(pair.second) }
+                it.filter { it.desc.contains(pair.second, ignoreCase = false) }
             }
         }.flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main)
 
@@ -42,7 +42,7 @@ class HomeViewModel : ViewModel() {
             location to keyword
         }.flatMapLatest { pair ->
             _repo.getJob(Status.DONE, pair.first).map {
-                it.filter { it.desc.contains(pair.second) }
+                it.filter { it.desc.contains(pair.second, ignoreCase = false) }
             }
         }.flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main)
 
@@ -51,7 +51,7 @@ class HomeViewModel : ViewModel() {
             location to keyword
         }.flatMapLatest { pair ->
             _repo.getJob(Status.ACCEPTED, pair.first).map {
-                it.filter { it.desc.contains(pair.second) }
+                it.filter { it.desc.contains(pair.second, ignoreCase = false) }
             }
         }.flowOn(Dispatchers.IO).asLiveData(Dispatchers.Main)
 
