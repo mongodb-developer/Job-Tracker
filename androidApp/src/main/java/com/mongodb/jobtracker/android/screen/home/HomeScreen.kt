@@ -3,7 +3,9 @@
 package com.mongodb.jobtracker.android.screen.home
 
 import android.content.Intent
+import android.media.MediaPlayer
 import android.os.Bundle
+import android.provider.Settings
 import android.text.format.DateUtils
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -95,6 +97,10 @@ class HomeScreen : ComponentActivity() {
         }) {
             Container(topPadding = it.calculateTopPadding(), homeVM = homeVM)
             if (onNewJob.value) {
+                val player: MediaPlayer =
+                    MediaPlayer.create(this, Settings.System.DEFAULT_NOTIFICATION_URI)
+                player.start()
+
                 Toast.makeText(LocalContext.current, "New Job is available", Toast.LENGTH_SHORT)
                     .show()
             }
