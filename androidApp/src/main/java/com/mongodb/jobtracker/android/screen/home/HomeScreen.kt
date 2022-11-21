@@ -55,6 +55,8 @@ class HomeScreen : ComponentActivity() {
     @Composable
     fun TopBar() {
         val context = LocalContext.current
+        val homeVM = viewModel<HomeViewModel>()
+        val onNewJob = homeVM.newJobAlert.observeAsState(false)
 
         Scaffold(topBar = {
             CenterAlignedTopAppBar(
@@ -91,21 +93,18 @@ class HomeScreen : ComponentActivity() {
                 },
             )
         }) {
-            Container(it.calculateTopPadding())
+            Container(topPadding = it.calculateTopPadding(), homeVM = homeVM)
+            if (onNewJob.value) {
+                Toast.makeText(LocalContext.current, "New Job is available", Toast.LENGTH_SHORT)
+                    .show()
+            }
         }
     }
 
-    @Preview
     @Composable
-    fun ContainerPreview() {
-        Container(10.dp)
-    }
-
-    @Composable
-    fun Container(topPadding: Dp) {
+    fun Container(topPadding: Dp, homeVM: HomeViewModel) {
 
         val selectedTab = remember { mutableStateOf(0) }
-        val homeVM = viewModel<HomeViewModel>()
 
         val unassignedJobs = homeVM.unassignedJobs.observeAsState(emptyList())
         val doneJobs = homeVM.doneJobs.observeAsState(emptyList())
@@ -128,7 +127,6 @@ class HomeScreen : ComponentActivity() {
         }
         val localSearchText = homeVM.searchKeyword.collectAsState("")
 
-        val onNewJob = homeVM.newJobAlert.observeAsState(false)
 
         Column(modifier = Modifier.padding(top = topPadding)) {
 
@@ -178,17 +176,17 @@ class HomeScreen : ComponentActivity() {
                 selectedTabIndex = selectedTab.value,
                 tabs = {
                     Tab(
-                        selected = false,
+                        selected = true,
                         onClick = { selectedTab.value = 0 },
                         text = { Text(text = "Unassigned") })
 
                     Tab(
-                        selected = false,
+                        selected = true,
                         onClick = { selectedTab.value = 1 },
                         text = { Text(text = "Assigned") })
 
                     Tab(
-                        selected = false,
+                        selected = true,
                         onClick = { selectedTab.value = 2 },
                         text = { Text(text = "Done") })
                 }
@@ -215,10 +213,6 @@ class HomeScreen : ComponentActivity() {
                     ListRow(currentJobList.value[position], onJobStatusChange)
                 }
             }
-
-            if (onNewJob.value)
-                Toast.makeText(LocalContext.current, "New Job is available", Toast.LENGTH_LONG)
-                    .show()
         }
     }
 
